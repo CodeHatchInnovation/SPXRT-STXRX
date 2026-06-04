@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const productos = [
-        { id: "p1", nombre: "Nike Phantom 6 Mamba", precio: 5299, desc: "Precisión implacable. Edición especial inspirada en el instinto de la Black Mamba.", img: "https://static.nike.com/a/images/w_1280,q_auto,f_auto/a4295dc9-cdac-4171-aa07-23ee1e23554d/phantom-6-low-black-mamba-if4392-001-release-date.jpg", tallas: [26,27,28,29]},
+        { id: "p1", nombre: "Nike Phantom 6 Mamba", precio: 5299, desc: "Precisión implacable. Edición especial inspirada en el instinto de la Black Mamba.", img: "https://static.nike.com/a/images/w_1280,q_auto,f_auto/3299838b-a929-40bc-bc0d-f97008d6bd6f/phantom-6-high-black-mamba-if4394-001-release-date.jpg", tallas: [26, 27, 28, 29] },
         { id: "p2", nombre: "Adidas X Crazyfast Messi", precio: 1499, desc: "Velocidad pura. El calzado oficial del Rey para cambios de dirección explosivos.", img: "adidas messi.png", tallas: [25, 26, 27, 28] },
         { id: "p3", nombre: "Nike Phantom GX 2 Academy", precio: 2099, desc: "Toque quirúrgico con NikeSkin y tracción Cyclone 360 para agilidad total.", img: "https://soccerpost.com/cdn/shop/files/AURORA_FJ2577-400_PHSRH000-2000_clipped_rev_1.png?v=1721659274&width=1200", tallas: [26, 27, 28, 29] },
         { id: "p4", nombre: "Chamarra Deportiva Selección Nacional de México 1986", precio: 3999, desc: "Rinde homenaje a la emocionante cultura del fútbol con la Chamarra Deportiva Selección Nacional de México 1986. Esta chamarra deportiva es un homenaje al rico legado de la Copa Mundial™ de México de 1986, donde se combinan elementos de diseño icónicos con un toque moderno.", img: "https://assets.adidas.com/images/h_2000,f_auto,q_auto,fl_lossy,c_fill,g_auto/6c0fc5b7978c4f359be39a3354ee8a53_9366/Chamarra_Deportiva_Seleccion_Nacional_de_Mexico_1986_Verde_JM1092_HM5.jpg", tallas: ["XS", "S", "M", "L", "XL", "2X"] },
@@ -8,25 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: "p6", nombre: "Nike Match Jr.", precio: 599, desc: "Haz cada parada sin miedo gracias a las palmas acolchadas de espuma, las cuales absorben el impacto de los tiros más potentes.", img: "https://static.nike.com/a/images/t_web_pdp_535_v2/f_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/bf49f0e0-2ce2-4484-a7fb-bc190de3fbaa/NK+GK+MATCH+JR+-+HO24.png", tallas: [4,5,6,7,8] },
         { id: "p7", nombre: "Nike Pitch", precio: 550, desc: "El balón Nike Pitch es perfecto para las sesiones de entrenamiento de principiante y para desarrollar tu juego de pies. Su diseño de 12 paneles y su cubierta duradera mantienen una forma y una durabilidad constantes, entrenamiento tras entrenamiento", img: "https://static.nike.com/a/images/t_web_pdp_535_v2/f_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/22736655-8676-4459-8271-3eda0d8d2f11/NIKE+PITCH+-+FA25.png", tallas: [3,4,5] },
         { id: "p8", nombre: "Nike Total 90", precio: 2500, desc: "Auténtico estilo de fútbol, ahora para el día a día. Los Total 90 están de regreso ofreciendo el estilo retro de los años 2000 con su parte superior acolchada y agujetas asimétricas originales. Cambiamos la suela con tachones por una suela de goma plana, ideal para la calle y trajimos de vuelta una paleta de colores de herencia para usarlos como quieras.", img: "https://static.nike.com/a/images/t_web_pdp_535_v2/f_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/100b402b-a93d-43c3-8d25-570fd1ab5a41/WMNS+NIKE+T90.png", tallas: [22,22.5,23,23.5,24,24.5,25,25.5,26] },
-        {
-          id: "p9",
-          nombre: "Tenis 360 Demo",
-          precio: 1500,
-          desc: "Producto de demostración con vista rotativa 360° para mostrar diferentes ángulos del producto.",
-          img: "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/1.png",
-
-         img360: [
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/1.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/2.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/3.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/4.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/5.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/6.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/7.png",
-             "https://raw.githubusercontent.com/sergiovargasdev/360-product-view/main/shoe/8.png"
-                 ],
-          tallas: [26,27,28]
-        }
+        { id: "p9", nombre: "Jersey Local Italia 26 Versión Jugador", precio: 2299, desc: "Lleva con orgullo tu pasión. Recuerda que al personalizar un artículo.", img: "https://assets.adidas.com/images/h_2000,f_auto,q_auto,fl_lossy,c_fill,g_auto/db5d24aa10144a37b74c3901e80aaa86_9366/Jersey_Local_Italia_26_Version_Jugador_Azul_JL6934_HM5.jpg", tallas: ["XS", "S", "M", "L", "XL", "2X"] }
     ];
 
     let carrito = [], seleccionado = null, tallaActiva = null, rating = 0;
@@ -56,26 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('precio-modal').innerText = `$${p.precio.toLocaleString()} MXN`;
         document.getElementById('desc-modal').innerText = p.desc;
         document.getElementById('img-modal').src = p.img;
-        // activar rotación 360 si el producto tiene imágenes 360
-        if(p.img360){
-            let index = 0;
-            const img = document.getElementById('img-modal');
-        
-            img.onwheel = (e)=>{
-                e.preventDefault();
-        
-                if(e.deltaY > 0){
-                    index++;
-                }else{
-                    index--;
-                }
-        
-                if(index >= p.img360.length) index = 0;
-                if(index < 0) index = p.img360.length-1;
-        
-                img.src = p.img360[index];
-            };
-        }
         document.getElementById('tallas-modal').innerHTML = p.tallas.map(t => 
             `<button onclick="marcarTalla(${t}, this)" class="py-4 border border-gray-100 text-xs font-bold hover:border-[#7c3aed] transition-all">${t}</button>`).join('');
         
@@ -145,3 +107,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cerrar-fondo-modal').onclick = () => modal.classList.add('hidden');
 
 });
+
+
