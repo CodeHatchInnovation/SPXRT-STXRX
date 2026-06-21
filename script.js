@@ -260,8 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let productosTexto = "";
         
         try {
-            // Importamos dinámicamente las herramientas desde el mismo origen para evitar conflictos de instancias
-            const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+            // Importamos las herramientas y el inicializador oficial de Firebase en caliente
+            const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+            const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+
+            // Obtenemos la base de datos garantizando que sea la instancia correcta del SDK
+            const app Activa = getApp();
+            const dbCorrecta = getFirestore(appActiva);
 
             for (const item of carrito) {
                 productosTexto += `• ${item.nombre}\nTalla: ${item.talla}\nPrecio: $${item.precioVenta}\n\n`;
@@ -269,14 +274,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const productoOriginal = productos.find(p => p.id === item.id);
                 if (productoOriginal && productoOriginal.tallas) {
                     const tallasActualizadas = productoOriginal.tallas.map(t => {
-                        if (t.talla == item.talla) { // Usamos == por si las tallas vienen como string o número
+                        if (t.talla == item.talla) { 
                             return { ...t, stock: Math.max(0, Number(t.stock) - 1) };
                         }
                         return t;
                     });
 
-                    // Modificación directa y segura usando la instancia unificada
-                    const productoDocRef = doc(firestoreDB, "productos", item.id);
+                    // Usamos la db unificada y verificada por el SDK
+                    const productoDocRef = doc(dbCorrecta, "productos", item.id);
                     await updateDoc(productoDocRef, {
                         tallas: tallasActualizadas
                     });
@@ -316,7 +321,7 @@ ${total}
             document.getElementById('modal-envio').classList.add('hidden');
 
         } catch (error) {
-            console.error("Error exacto en la consola:", error);
+            console.error("Error al actualizar el stock en la compra:", error);
             alert("Hubo un problema al descontar el inventario. Por favor, inténtalo de nuevo.");
         }
     });
