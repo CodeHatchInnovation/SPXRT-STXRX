@@ -265,8 +265,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const collectionRef = firebaseFirestore.collection;
             const addDocRef = firebaseFirestore.addDoc;
 
-            // 1. Descontar del inventario de productos
+            // 1. Descontar del inventario de productos en Firestore
+            let productosTextoEmail = ""; // Construirá el texto formateado para el correo
+            
             for (const item of carrito) {
+                productosTextoEmail += `• ${item.nombre} - Talla: ${item.talla} - Precio: $${item.precioVenta.toLocaleString()} MXN\n`;
+
                 const productoOriginal = productos.find(p => p.id === item.id);
                 if (productoOriginal && productoOriginal.tallas) {
                     const tallasActualizadas = productoOriginal.tallas.map(t => {
@@ -283,7 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Mapeamos los productos del carrito para guardarlos en la orden de forma limpia
+            const totalTexto = document.getElementById('total-carrito').innerText;
+            const direccionCompleta = `${calle}, Col. ${colonia}, ${city}, ${estado}. CP: ${cp}. (Ref: ${referencias})`;
+
+            // 2. Guardar el Pedido en la colección "pedidos" de Firestore
             const productosPedido = carrito.map(item => ({
                 id: item.id,
                 nombre: item.nombre,
@@ -291,37 +298,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 precio: item.precioVenta
             }));
 
-            const totalTexto = document.getElementById('total-carrito').innerText;
-
-            // 2. Guardar el Pedido en una nueva colección "pedidos" en Firestore
             const nuevoPedido = {
-                cliente: {
-                    nombre,
-                    telefono,
-                    correo
-                },
-                direccion: {
-                    calle,
-                    colonia,
-                    ciudad: city,
-                    estado,
-                    cp,
-                    referencias
-                },
+                cliente: { nombre, telefono, correo },
+                direccion: { calle, colonia, ciudad: city, estado, cp, referencias },
                 productos: productosPedido,
                 total: totalTexto,
                 metodoPago: "Pago contra entrega",
-                estatus: "Pendiente", // Te servirá para tu panel de Admin (Pendiente, Enviado, Entregado)
+                estatus: "Pendiente",
                 fecha: new Date().toISOString()
             };
 
             await addDocRef(collectionRef(firestoreDB, "pedidos"), nuevoPedido);
 
-            // 3. Simulación / Preparación para el Envío de Correo (Próximamente con tu Admin o EmailJS)
-            console.log("Enviando correo de confirmación de ticket a:", correo);
+            // 3. Enviar Correo de Confirmación mediante EmailJS ✉️
+            const templateParams = {
+                cliente_nombre: nombre,
+                cliente_correo: correo,
+                cliente_telefono: telefono,
+                productos: productosTextoEmail,
+                total: totalTexto,
+                direccion: direccionCompleta
+            };
+
+            // Reemplaza con tus IDs reales de la dashboard de EmailJS
+            await emailjs.send('service_2rbd0tp', 'template_9wxljc7', templateParams);
+            console.log("Correo enviado con éxito.");
             
-            // Mensaje de éxito al cliente en pantalla
-            alert(`¡Compra procesada con éxito, ${nombre}!\nTu pedido ha sido registrado. Se ha enviado un ticket de confirmación a tu correo: ${correo}`);
+            // Mensaje de éxito en pantalla
+            alert(`¡Compra procesada con éxito, ${nombre}!\nTu pedido ha sido registrado y el ticket fue enviado a tu correo: ${correo}`);
 
             // Limpiamos el carrito e interfaz
             carrito = [];
