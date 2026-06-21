@@ -213,17 +213,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-cerrar-modal').onclick = () => { modal.classList.add('hidden'); };
     document.getElementById('cerrar-fondo-modal').onclick = () => { modal.classList.add('hidden'); };
 
-    // ===============================
+// ===============================
     // FORMULARIO DE ENVÍO
     // ===============================
-    document.getElementById('btn-continuar-pedido').onclick = () => {
+    document.getElementById('btn-continuar-pedido').onclick = (e) => {
+        // Evitamos cualquier comportamiento por defecto o propagación molesta
+        e.preventDefault();
+        e.stopPropagation();
         if (carrito.length === 0) return alert("Tu carrito está vacío.");
-        sidebar.classList.add('hidden');
-        document.getElementById('modal-envio').classList.remove('hidden');
+        // Cerramos el carrito al instante
+        sidebar.classList.add('hidden'); 
+        // Forzamos al navegador a pintar el formulario de envío en el siguiente cuadro de animación
+        requestAnimationFrame(() => {
+            document.getElementById('modal-envio').classList.remove('hidden'); 
+        });
     };
-    document.getElementById('cerrar-envio').onclick = () => { document.getElementById('modal-envio').classList.add('hidden'); };
-    document.getElementById('cerrar-fondo-envio').onclick = () => { document.getElementById('modal-envio').classList.add('hidden'); };
-});
 
 // ===============================
 // BUSCADOR
