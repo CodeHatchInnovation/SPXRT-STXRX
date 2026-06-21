@@ -3,9 +3,9 @@ import {
     realtimeDB,
     collection,
     getDocs,
-    addDoc,     // 👈 Traído desde tu firebase.js
-    updateDoc,  // 👈 Traído desde tu firebase.js
-    doc,        // 👈 Traído desde tu firebase.js
+    addDoc,     // Traído desde tu firebase.js
+    updateDoc,  // Traído desde tu firebase.js
+    doc,        // Traído desde tu firebase.js
     ref,
     push,
     onValue,
@@ -34,12 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
             productos = [];
             
             querySnapshot.forEach((docSnap) => {
-                // Primero extraemos los datos del producto
+                // Primero extraemos los datos internos del producto
                 const datosProducto = docSnap.data();
                 
                 productos.push({
                     ...datosProducto,
-                    // Forzamos que el 'id' del objeto sea SIEMPRE el ID del documento (el código raro de la columna del medio)
+                    // Forzamos que la propiedad 'id' sea SIEMPRE el ID del documento (el código aleatorio de la columna del medio)
                     id: docSnap.id 
                 });
             });
@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error al traer productos de Firestore:", error);
         }
     }
-    // Arrancamos la descarga de tenis en segundo plano
+    
+    // Arrancamos la descarga de productos en segundo plano
     obtenerProductosDeFirestore();
 
     // ===============================
@@ -244,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-   // =========================================================
+    // =========================================================
     // PROCESAR COMPRA: GUARDAR EN BD Y NOTIFICACIÓN POR CORREO 🚀
     // =========================================================
     document.getElementById('form-envio').addEventListener('submit', async (e) => {
@@ -275,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return t;
                     });
 
-                    // Usamos 'doc' y 'updateDoc' oficiales de Firestore que exportamos en tu firebase.js
+                    // Modifica el stock apuntando al ID real del documento asignado arriba
                     const productoDocRef = doc(firestoreDB, "productos", item.id);
                     await updateDoc(productoDocRef, {
                         tallas: tallasActualizadas
@@ -304,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fecha: new Date().toISOString()
             };
 
-            // Usamos 'addDoc' oficial de Firestore para meter el pedido con ID automático
+            // Guarda el respaldo del ticket de venta en la base de datos de Firestore
             await addDoc(collection(firestoreDB, "pedidos"), nuevoPedido);
 
             // 3. Enviar Correo de Confirmación mediante EmailJS ✉️
@@ -336,4 +337,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
         }
     });
- });
+});
