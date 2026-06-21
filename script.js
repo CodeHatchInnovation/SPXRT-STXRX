@@ -260,13 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let productosTexto = "";
         
         try {
-            // Importamos las herramientas y el inicializador oficial de Firebase en caliente
-            const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-            const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-
-            // Obtenemos la base de datos garantizando que sea la instancia correcta del SDK
-            const app Activa = getApp();
-            const dbCorrecta = getFirestore(appActiva);
+            // Importamos las herramientas de Firestore de manera limpia y asíncrona
+            const firebaseFirestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+            const docRef = firebaseFirestore.doc;
+            const updateDocRef = firebaseFirestore.updateDoc;
 
             for (const item of carrito) {
                 productosTexto += `• ${item.nombre}\nTalla: ${item.talla}\nPrecio: $${item.precioVenta}\n\n`;
@@ -280,9 +277,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         return t;
                     });
 
-                    // Usamos la db unificada y verificada por el SDK
-                    const productoDocRef = doc(dbCorrecta, "productos", item.id);
-                    await updateDoc(productoDocRef, {
+                    // Creamos la referencia al documento usando el objeto firestoreDB que tu proyecto ya reconoce
+                    const productoDocRef = docRef(firestoreDB, "productos", item.id);
+                    
+                    // Actualizamos el documento directamente en Firestore
+                    await updateDocRef(productoDocRef, {
                         tallas: tallasActualizadas
                     });
                 }
@@ -321,7 +320,7 @@ ${total}
             document.getElementById('modal-envio').classList.add('hidden');
 
         } catch (error) {
-            console.error("Error al actualizar el stock en la compra:", error);
+            console.error("Error exacto detallado en la consola:", error);
             alert("Hubo un problema al descontar el inventario. Por favor, inténtalo de nuevo.");
         }
     });
