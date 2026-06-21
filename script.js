@@ -219,14 +219,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-continuar-pedido').onclick = (e) => {
         e.preventDefault();
         if (carrito.length === 0) return alert("Tu carrito está vacío.");
-        // 1. Primero cerramos el carrito por completo
+        
+        // 1. Ocultamos el carrito
         sidebar.classList.add('hidden'); 
-        // 2. Esperamos un instante a que el navegador procese el cierre 
-        // y abrimos el formulario de inmediato
-        setTimeout(() => {
-            document.getElementById('modal-envio').classList.remove('hidden');
-        }, 50); // 50 milisegundos son imperceptibles pero limpian el flujo del DOM
+        
+        // 2. Levantamos inmediatamente el modal de envío
+        document.getElementById('modal-envio').classList.remove('hidden');
     };
+
+    document.getElementById('cerrar-envio').onclick = () => { document.getElementById('modal-envio').classList.add('hidden'); };
+    document.getElementById('cerrar-fondo-envio').onclick = () => { document.getElementById('modal-envio').classList.add('hidden'); };
+
+}); // <-- Aquí se cierra correctamente el DOMContentLoaded
 
 // ===============================
 // BUSCADOR
