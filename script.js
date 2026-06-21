@@ -1,12 +1,15 @@
 import { 
     firestoreDB,
     realtimeDB,
-    collection, // Mantenemos la importación nativa que ya usa tu visualizador de productos
+    collection,
     getDocs,
+    addDoc,     // 👈 Traído desde tu firebase.js
+    updateDoc,  // 👈 Traído desde tu firebase.js
+    doc,        // 👈 Traído desde tu firebase.js
     ref,
     push,
     onValue,
-    update
+    update      // Este se queda para tus reseñas de Realtime
 } from "./firebase.js";
 
 // Variables de estado accesibles en todo el módulo
@@ -254,12 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const referencias = document.getElementById('envio-referencias').value;
         
         try {
-            // Importamos solo lo necesario desde el CDN, evitando chocar con 'collection'
-            const firebaseFirestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-            const docRef = firebaseFirestore.doc;
-            const updateDocRef = firebaseFirestore.updateDoc;
-            const addDocRef = firebaseFirestore.addDoc;
-
             // 1. Descontar del inventario de productos en Firestore
             let productosTextoEmail = ""; 
             
@@ -275,8 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         return t;
                     });
 
-                    const productoDocRef = docRef(firestoreDB, "productos", item.id);
-                    await updateDocRef(productoDocRef, {
+                    // Usamos 'doc' y 'updateDoc' oficiales de Firestore que exportamos en tu firebase.js
+                    const productoDocRef = doc(firestoreDB, "productos", item.id);
+                    await updateDoc(productoDocRef, {
                         tallas: tallasActualizadas
                     });
                 }
@@ -303,9 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 fecha: new Date().toISOString()
             };
 
-            // USA LA FUNCIÓN 'collection' QUE VIENE DESDE TU ARCHIVO LOCAL (Arriba en tus imports)
-            const origenColeccionPedidos = collection(firestoreDB, "pedidos");
-            await addDocRef(origenColeccionPedidos, nuevoPedido);
+            // Usamos 'addDoc' oficial de Firestore para meter el pedido con ID automático
+            await addDoc(collection(firestoreDB, "pedidos"), nuevoPedido);
 
             // 3. Enviar Correo de Confirmación mediante EmailJS ✉️
             const templateParams = {
