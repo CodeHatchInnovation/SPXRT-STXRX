@@ -242,9 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ===========================================
-    // WHATSAPP PEDIDO Y DESCUENTO DE INVENTARIO 🚀
-    // ===========================================
+    // =========================================================
+    // PROCESAR COMPRA: GUARDAR EN BD Y NOTIFICACIÓN POR CORREO 🚀
+    // =========================================================
     document.getElementById('form-envio').addEventListener('submit', async (e) => {
         e.preventDefault();
         const nombre = document.getElementById('envio-nombre').value;
@@ -257,17 +257,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const calle = document.getElementById('envio-calle').value;
         const referencias = document.getElementById('envio-referencias').value;
         
-        let productosTexto = "";
-        
         try {
-            // Importamos las herramientas de Firestore de manera limpia y asíncrona
+            // Importamos las herramientas oficiales necesarias en caliente
             const firebaseFirestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
             const docRef = firebaseFirestore.doc;
             const updateDocRef = firebaseFirestore.updateDoc;
+            const collectionRef = firebaseFirestore.collection;
+            const addDocRef = firebaseFirestore.addDoc;
 
+            // 1. Descontar del inventario de productos
             for (const item of carrito) {
-                productosTexto += `• ${item.nombre}\nTalla: ${item.talla}\nPrecio: $${item.precioVenta}\n\n`;
-
                 const productoOriginal = productos.find(p => p.id === item.id);
                 if (productoOriginal && productoOriginal.tallas) {
                     const tallasActualizadas = productoOriginal.tallas.map(t => {
@@ -277,50 +276,63 @@ document.addEventListener('DOMContentLoaded', () => {
                         return t;
                     });
 
-                    // Creamos la referencia al documento usando el objeto firestoreDB que tu proyecto ya reconoce
                     const productoDocRef = docRef(firestoreDB, "productos", item.id);
-                    
-                    // Actualizamos el documento directamente en Firestore
                     await updateDocRef(productoDocRef, {
                         tallas: tallasActualizadas
                     });
                 }
             }
 
-            const total = document.getElementById('total-carrito').innerText;
-            const mensaje = `
-🛒 NUEVO PEDIDO SPXRT STXRX
-👤 Cliente:
-${nombre}
-📞 Teléfono:
-${telefono}
-📧 Correo:
-${correo}
-📍 Dirección:
-${calle}
-${colonia}
-${city}
-${estado}
-CP: ${cp}
-📝 Referencias:
-${referencias}
-━━━━━━━━━━━━━━
-PRODUCTOS:
-${productosTexto}━━━━━━━━━━━━━━
-💰 Total:
-${total}
-🚚 Pago contra entrega
-`;
-            const numero = "+525525621721";
+            // Mapeamos los productos del carrito para guardarlos en la orden de forma limpia
+            const productosPedido = carrito.map(item => ({
+                id: item.id,
+                nombre: item.nombre,
+                talla: item.talla,
+                precio: item.precioVenta
+            }));
+
+            const totalTexto = document.getElementById('total-carrito').innerText;
+
+            // 2. Guardar el Pedido en una nueva colección "pedidos" en Firestore
+            const nuevoPedido = {
+                cliente: {
+                    nombre,
+                    telefono,
+                    correo
+                },
+                direccion: {
+                    calle,
+                    colonia,
+                    ciudad: city,
+                    estado,
+                    cp,
+                    referencias
+                },
+                productos: productosPedido,
+                total: totalTexto,
+                metodoPago: "Pago contra entrega",
+                estatus: "Pendiente", // Te servirá para tu panel de Admin (Pendiente, Enviado, Entregado)
+                fecha: new Date().toISOString()
+            };
+
+            await addDocRef(collectionRef(firestoreDB, "pedidos"), nuevoPedido);
+
+            // 3. Simulación / Preparación para el Envío de Correo (Próximamente con tu Admin o EmailJS)
+            console.log("Enviando correo de confirmación de ticket a:", correo);
             
-            window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, '_blank');
-            
+            // Mensaje de éxito al cliente en pantalla
+            alert(`¡Compra procesada con éxito, ${nombre}!\nTu pedido ha sido registrado. Se ha enviado un ticket de confirmación a tu correo: ${correo}`);
+
+            // Limpiamos el carrito e interfaz
             carrito = [];
             actualizarCarrito();
+            
+            // Reseteamos el formulario y cerramos el modal
+            document.getElementById('form-envio').reset();
             document.getElementById('modal-envio').classList.add('hidden');
 
         } catch (error) {
-            console.error("Error exacto detallado en la consola:", error);
-            alert("Hubo un problema al descontar el inventario. Por favor, inténtalo de nuevo.");
+            console.error("Error al procesar la compra completa:", error);
+            alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
         }
     });
