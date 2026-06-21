@@ -340,3 +340,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
         }
     });
+});
