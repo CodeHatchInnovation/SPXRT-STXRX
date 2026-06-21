@@ -33,25 +33,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===============================
     function cargarProductos(){
         grid.innerHTML = "";
-        productos.forEach((p,i)=>{
+        const refProductos = window.fbRef(window.fbDB,"productos");
+            window.fbOnValue(refProductos,(snap)=>{
+            const productos = Object.values(snap.val());
+            productos.forEach((p,i)=>{
             const div = document.createElement('div');
-            div.className = "reveal card-vantage p-8 cursor-pointer flex flex-col group";
-            div.style.animationDelay = `${i * 0.1}s`;
-            div.innerHTML = `
-                <div class="img-container-fix mb-6">
-                    <img src="${p.img}" 
-                    class="transition-transform duration-700 group-hover:scale-110">
-                </div>
-                <h3 class="font-nike text-lg mb-1">
-                    ${p.nombre}
-                </h3>
-                <p class="text-gray-400 text-sm font-bold">
-                    $${p.precioVenta.toLocaleString()}
-                </p>
+            div.className =
+            "reveal card-vantage p-8 cursor-pointer flex flex-col group";
+            div.innerHTML=`
+            <div class="img-container-fix mb-6">
+            <img src="${p.img}" 
+            class="transition-transform duration-700 group-hover:scale-110">
+            </div>
+            <h3 class="font-nike text-lg mb-1">
+            ${p.nombre}
+            </h3>
+            <p class="text-gray-400 text-sm font-bold">
+            $${p.precioVenta.toLocaleString()}
+            </p>
             `;
-            div.onclick = ()=> abrirModal(p);
+            div.onclick=()=>abrirModal(p);
             grid.appendChild(div);
-        });
+            });
+            });
     }
 
     // ===============================
