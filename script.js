@@ -89,10 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // ===============================
         // CARGAR RESEÑAS DESDE FIREBASE
         // ===============================
-        const ref = window.fbRef(
-            window.fbDB,
-            `resenas_v4/${p.id}`
-        );
         window.fbOnValue(ref,(snap)=>{
             const data = snap.val();
             document.getElementById('lista-reseñas').innerHTML = data ? 
