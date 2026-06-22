@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (carrito.length === 0) return alert("Tu carrito está vacío.");
         
-        sidebar.classList.add('hidden'); 
+        // Se quitó la línea que ocultaba el sidebar para evitar que falle al abrir el formulario
         document.getElementById('modal-envio').classList.remove('hidden');
     };
 
@@ -328,9 +328,13 @@ document.addEventListener('DOMContentLoaded', () => {
             carrito = [];
             actualizarCarrito();
             
-            // Reseteamos el formulario y cerramos el modal
+            // Reseteamos el formulario y cerramos los contenedores visuales
             document.getElementById('form-envio').reset();
             document.getElementById('modal-envio').classList.add('hidden');
+            sidebar.classList.add('hidden'); 
+
+            // RECARGA AUTOMÁTICA PARA ACTUALIZAR EL STOCK EN PANTALLA 🔄
+            window.location.reload();
 
         } catch (error) {
             console.error("Error al procesar la compra completa:", error);
