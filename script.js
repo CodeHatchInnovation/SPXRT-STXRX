@@ -35,12 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
             productos = [];
             
             querySnapshot.forEach((docSnap) => {
-                // Primero extraemos los datos internos del producto
                 const datosProducto = docSnap.data();
                 
                 productos.push({
                     ...datosProducto,
-                    // Forzamos que la propiedad 'id' sea SIEMPRE el ID del documento (el código aleatorio de la columna del medio)
                     id: docSnap.id 
                 });
             });
@@ -55,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Arrancamos la descarga de productos en segundo plano
     obtenerProductosDeFirestore();
 
     // ===============================
@@ -227,8 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-continuar-pedido').onclick = (e) => {
         e.preventDefault();
         if (carrito.length === 0) return alert("Tu carrito está vacío.");
-        
-        // Se quitó la línea que ocultaba el sidebar para evitar que falle al abrir el formulario
         document.getElementById('modal-envio').classList.remove('hidden');
     };
 
@@ -247,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================
-    // PROCESAR COMPRA: GUARDAR EN BD Y NOTIFICACIÓN POR CORREO 🚀
+    // PROCESAR COMPRA: CON TRANSACCIONES ANTI-SOBREPOSICIÓN 🚀
     // =========================================================
     document.getElementById('form-envio').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -262,31 +257,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const referencias = document.getElementById('envio-referencias').value;
         
         try {
-            // 1. Descontar del inventario de productos en Firestore
             let productosTextoEmail = ""; 
-            
-            for (const item of carrito) {
-                productosTextoEmail += `• ${item.nombre} - Talla: ${item.talla} - Precio: $${item.precioVenta.toLocaleString()} MXN\n`;
+            const totalTexto = document.getElementById('total-carrito').innerText;
+            const direccionCompleta = `${calle}, Col. ${colonia}, ${city}, ${estado}. CP: ${cp}. (Ref: ${referencias})`;
 
-                const productoOriginal = productos.find(p => p.id === item.id);
-                if (productoOriginal && productoOriginal.tallas) {
-                    const tallasActualizadas = productoOriginal.tallas.map(t => {
-                        if (t.talla == item.talla) { 
-                            return { ...t, stock: Math.max(0, Number(t.stock) - 1) };
+            // Ejecutamos la Transacción Atómica en Firestore
+            await runTransaction(firestoreDB, async (transaction) => {
+                const actualizacionesAfectadas = [];
+
+                for (const item of carrito) {
+                    const productoDocRef = doc(firestoreDB, "productos", item.id);
+                    // Lectura directa y segura de la nube dentro del hilo de la transacción
+                    const sfDoc = await transaction.get(productoDocRef);
+                    
+                    if (!sfDoc.exists()) {
+                        throw "¡Uno de los productos en tu carrito ya no existe en la tienda!";
+                    }
+
+                    const datosProductoNube = sfDoc.data();
+                    let stockSuficiente = false;
+
+                    // Mapeamos las tallas con el stock real de la base de datos
+                    const tallasActualizadas = datosProductoNube.tallas.map(t => {
+                        if (t.tally === item.talla || t.talla == item.talla) {
+                            const stockRealNube = Number(t.stock);
+                            
+                            // Validación del stock real
+                            if (stockRealNube > 0) {
+                                stockSuficiente = true;
+                                return { ...t, stock: stockRealNube - 1 };
+                            }
                         }
                         return t;
                     });
 
-                    // Modifica el stock apuntando al ID real del documento asignado arriba
-                    const productoDocRef = doc(firestoreDB, "productos", item.id);
-                    await updateDoc(productoDocRef, {
-                        tallas: tallasActualizadas
-                    });
-                }
-            }
+                    // Si no pasó el filtro de stock real en la nube, se revienta la transacción
+                    if (!stockSuficiente) {
+                        throw `Lo sentimos, el producto "${item.nombre}" en Talla [${item.talla}] se acaba de agotar debido a otra compra simultánea.`;
+                    }
 
-            const totalTexto = document.getElementById('total-carrito').innerText;
-            const direccionCompleta = `${calle}, Col. ${colonia}, ${city}, ${estado}. CP: ${cp}. (Ref: ${referencias})`;
+                    actualizacionesAfectadas.push({ ref: productoDocRef, nuevasTallas: tallasActualizadas });
+                    productosTextoEmail += `• ${item.nombre} - Talla: ${item.talla} - Precio: $${item.precioVenta.toLocaleString()} MXN\n`;
+                }
+
+                // Si todo el carrito tiene stock suficiente, se aplican los descuentos de una sola vez
+                actualizacionesAfectadas.forEach(act => {
+                    transaction.update(act.ref, { tallas: act.nuevasTallas });
+                });
+            });
 
             // 2. Guardar el Pedido en la colección "pedidos" de Firestore
             const productosPedido = carrito.map(item => ({
@@ -306,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fecha: new Date().toISOString()
             };
 
-            // Guarda el respaldo del ticket de venta en la base de datos de Firestore
             await addDoc(collection(firestoreDB, "pedidos"), nuevoPedido);
 
             // 3. Enviar Correo de Confirmación mediante EmailJS ✉️
@@ -322,24 +339,28 @@ document.addEventListener('DOMContentLoaded', () => {
             await emailjs.send('service_jcmou3p', 'template_9wxljc7', templateParams);
             console.log("Correo enviado con éxito.");
             
-            // Mensaje de éxito en pantalla
             alert(`¡Compra procesada con éxito, ${nombre}!\nTu pedido ha sido registrado y el ticket fue enviado a tu correo: ${correo}`);
 
-            // Limpiamos el carrito e interfaz
+            // Limpieza de estado e interfaz
             carrito = [];
             actualizarCarrito();
             
-            // Reseteamos el formulario y cerramos los contenedores visuales
             document.getElementById('form-envio').reset();
             document.getElementById('modal-envio').classList.add('hidden');
             sidebar.classList.add('hidden'); 
 
-            // RECARGA AUTOMÁTICA PARA ACTUALIZAR EL STOCK EN PANTALLA 🔄
             window.location.reload();
 
         } catch (error) {
             console.error("Error al procesar la compra completa:", error);
-            alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
+            
+            // Si el error fue disparado manualmente por falta de stock real
+            if (typeof error === 'string' && error.includes('se acaba de agotar')) {
+                alert(`⚠️ ¡STOCK INSUFICIENTE!\n\n${error}\n\nPor favor, haz clic en "Aceptar" para refrescar la página y actualizar el stock de la tienda.`);
+                window.location.reload();
+            } else {
+                alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
+            }
         }
     });
 });
