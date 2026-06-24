@@ -253,6 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================
     document.getElementById('form-envio').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // 1. AGRUPAR EL CARRITO (Esto es lo nuevo que evita el error)
+        const carritoAgrupado = carrito.reduce((acc, item) => {
+            const key = `${item.id}-${item.talla}`;
+            if (!acc[key]) acc[key] = { ...item, cantidad: 0 };
+            acc[key].cantidad += 1;
+            return acc;
+        }, {});
+
         const nombre = document.getElementById('envio-nombre').value;
         const telefono = document.getElementById('envio-telefono').value;
         const correo = document.getElementById('envio-correo').value;
@@ -272,9 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
             await runTransaction(firestoreDB, async (transaction) => {
                 const actualizacionesAfectadas = [];
 
-                for (const item of carrito) {
+                // 2. Iteramos sobre el carrito AGRUPADO en lugar del carrito original
+                for (const key in carritoAgrupado) {
+                    const item = carritoAgrupado[key];
                     const productoDocRef = doc(firestoreDB, "productos", item.id);
-                    // Lectura directa y segura de la nube dentro del hilo de la transacción
                     const sfDoc = await transaction.get(productoDocRef);
                     
                     if (!sfDoc.exists()) {
@@ -284,30 +294,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     const datosProductoNube = sfDoc.data();
                     let stockSuficiente = false;
 
-                    // Mapeamos las tallas con el stock real de la base de datos
                     const tallasActualizadas = datosProductoNube.tallas.map(t => {
-                        if (t.tally === item.talla || t.talla == item.talla) {
+                        if (t.talla == item.talla) {
                             const stockRealNube = Number(t.stock);
-                            
-                            // Validación del stock real
-                            if (stockRealNube > 0) {
+                            // 3. Restamos la cantidad agrupada (item.cantidad)
+                            if (stockRealNube >= item.cantidad) {
                                 stockSuficiente = true;
-                                return { ...t, stock: stockRealNube - 1 };
+                                return { ...t, stock: stockRealNube - item.cantidad };
                             }
                         }
                         return t;
                     });
 
-                    // Si no pasó el filtro de stock real en la nube, se revienta la transacción
                     if (!stockSuficiente) {
-                        throw `Lo sentimos, el producto "${item.nombre}" en Talla [${item.talla}] se acaba de agotar debido a otra compra simultánea.`;
+                        throw `Lo sentimos, el producto "${item.nombre}" en Talla [${item.talla}] no tiene suficiente stock.`;
                     }
 
                     actualizacionesAfectadas.push({ ref: productoDocRef, nuevasTallas: tallasActualizadas });
-                    productosTextoEmail += `• ${item.nombre} - Talla: ${item.talla} - Precio: $${item.precioVenta.toLocaleString()} MXN\n`;
+                    productosTextoEmail += `• ${item.nombre} - Talla: ${item.talla} (Cant: ${item.cantidad}) - Precio: $${item.precioVenta.toLocaleString()} MXN\n`;
                 }
 
-                // Si todo el carrito tiene stock suficiente, se aplican los descuentos de una sola vez
                 actualizacionesAfectadas.forEach(act => {
                     transaction.update(act.ref, { tallas: act.nuevasTallas });
                 });
@@ -344,11 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             await emailjs.send('service_jcmou3p', 'template_9wxljc7', templateParams);
-            console.log("Correo enviado con éxito.");
             
             alert(`¡Compra procesada con éxito, ${nombre}!\nTu pedido ha sido registrado y el ticket fue enviado a tu correo: ${correo}`);
 
-            // Limpieza de estado e interfaz
             carrito = [];
             actualizarCarrito();
             
@@ -360,10 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Error al procesar la compra completa:", error);
-            
-            // Si el error fue disparado manualmente por falta de stock real
-            if (typeof error === 'string' && error.includes('se acaba de agotar')) {
-                alert(`⚠️ ¡STOCK INSUFICIENTE!\n\n${error}\n\nPor favor, haz clic en "Aceptar" para refrescar la página y actualizar el stock de la tienda.`);
+            if (typeof error === 'string' && error.includes('stock')) {
+                alert(`⚠️ ¡STOCK INSUFICIENTE!\n\n${error}\n\nLa página se recargará para actualizar el stock real.`);
                 window.location.reload();
             } else {
                 alert("Hubo un problema al procesar tu compra. Por favor, inténtalo de nuevo.");
